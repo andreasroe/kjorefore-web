@@ -1,6 +1,6 @@
 'use client';
 
-import { AdvancedMarker, InfoWindow, useAdvancedMarkerRef } from '@vis.gl/react-google-maps';
+import { Marker, InfoWindow } from '@vis.gl/react-google-maps';
 import { useState } from 'react';
 import { RouteSegment } from '@/lib/types';
 import { getWeatherIcon, getTemperatureColor } from '@/lib/utils/weather-icons';
@@ -43,36 +43,32 @@ interface WeatherMarkerProps {
 }
 
 function WeatherMarker({ segment, isSelected, onSelect, onClose }: WeatherMarkerProps) {
-  const [markerRef, marker] = useAdvancedMarkerRef();
+  const [marker, setMarker] = useState<google.maps.Marker | null>(null);
 
   if (!segment.weather) return null;
 
   const { weather, location, estimatedArrivalTime, isHazardous } = segment;
   const icon = getWeatherIcon(weather.weatherCode);
 
+  // Create custom label for marker
+  const label = {
+    text: `${icon} ${Math.round(weather.temperature)}°`,
+    color: isHazardous ? '#991b1b' : '#1f2937',
+    fontSize: '14px',
+    fontWeight: 'bold',
+  };
+
   return (
     <>
-      <AdvancedMarker
-        ref={markerRef}
+      <Marker
         position={location.coordinates}
         onClick={onSelect}
         title={location.name}
-      >
-        <div
-          className={`
-            flex flex-col items-center px-1.5 py-1 rounded-md shadow-md cursor-pointer
-            transition-transform hover:scale-110
-            ${isHazardous ? 'bg-red-100 border border-red-500' : 'bg-white border border-gray-300'}
-          `}
-        >
-          <div className="text-lg leading-none">{icon}</div>
-          <div className={`text-xs font-semibold leading-tight ${getTemperatureColor(weather.temperature)}`}>
-            {Math.round(weather.temperature)}°
-          </div>
-        </div>
-      </AdvancedMarker>
+        label={label}
+        ref={(ref) => setMarker(ref)}
+      />
 
-      {isSelected && (
+      {isSelected && marker && (
         <InfoWindow anchor={marker} onCloseClick={onClose}>
           <Card className="p-3 min-w-[250px] border-0 shadow-none">
             <div className="space-y-2">
