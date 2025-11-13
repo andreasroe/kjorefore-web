@@ -40,7 +40,6 @@ export function RouteMap({ route, className }: RouteMapProps) {
         defaultZoom={DEFAULT_ZOOM}
         gestureHandling="greedy"
         disableDefaultUI={false}
-        mapId="kjorefore-map"
         className="w-full h-full"
       >
         {route && (
