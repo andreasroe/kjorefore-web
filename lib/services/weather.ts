@@ -6,9 +6,7 @@ const MET_NO_BASE_URL = 'https://api.met.no/weatherapi/locationforecast/2.0';
 const CACHE_DURATION_MS = 30 * 60 * 1000; // 30 minutes
 
 // User-Agent header is required by MET.no
-const USER_AGENT = `${process.env.NEXT_PUBLIC_APP_NAME || 'Kjorefore'}/${
-  process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0'
-} (${process.env.NEXT_PUBLIC_YR_CONTACT_EMAIL || 'contact@kjorefore.no'})`;
+const USER_AGENT = `${process.env.NEXT_PUBLIC_APP_NAME || 'Kjorefore'}/${process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0'} (${process.env.NEXT_PUBLIC_YR_CONTACT_EMAIL || 'contact@kjorefore.no'})`.replace(/\s+/g, ' ').trim();
 
 /**
  * Cache entry for weather data
