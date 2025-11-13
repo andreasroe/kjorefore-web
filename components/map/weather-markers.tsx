@@ -44,10 +44,10 @@ interface WeatherMarkerProps {
 
 function WeatherMarker({ segment, isSelected, onSelect, onClose }: WeatherMarkerProps) {
   const [markerRef, marker] = useAdvancedMarkerRef();
-
-  if (!segment.weather) return null;
-
   const { weather, location, estimatedArrivalTime, isHazardous } = segment;
+
+  if (!weather) return null;
+
   const icon = getWeatherIcon(weather.weatherCode);
 
   return (
