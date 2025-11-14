@@ -35,7 +35,7 @@ export default function LoginPage() {
         router.push('/');
         router.refresh();
       }
-    } catch (error) {
+    } catch {
       setError('Noe gikk galt. Prøv igjen.');
     } finally {
       setIsLoading(false);

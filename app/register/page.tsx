@@ -68,7 +68,7 @@ export default function RegisterPage() {
         router.push('/');
         router.refresh();
       }
-    } catch (error) {
+    } catch {
       setError('Noe gikk galt. Prøv igjen.');
     } finally {
       setIsLoading(false);
