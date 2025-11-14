@@ -56,7 +56,7 @@ export default function TermsPage() {
             <h2 className="text-2xl font-semibold mb-4">4. Ansvarsfraskrivelse</h2>
             <div className="space-y-4 text-muted-foreground">
               <p className="leading-relaxed">
-                Kjørefore tilbys "som den er" uten garantier av noe slag.
+                Kjørefore tilbys &quot;som den er&quot; uten garantier av noe slag.
               </p>
               <p className="leading-relaxed">
                 Værvarslene er veiledende og kan ikke garanteres å være nøyaktige.
@@ -77,7 +77,7 @@ export default function TermsPage() {
               </p>
               <ul className="list-disc list-inside space-y-2 ml-4">
                 <li>Søk etter ruter (startsted, destinasjon, tidspunkt)</li>
-                <li>Din posisjon hvis du bruker "Min posisjon"-funksjonen</li>
+                <li>Din posisjon hvis du bruker &quot;Min posisjon&quot;-funksjonen</li>
               </ul>
               <p className="leading-relaxed mt-4">
                 Vi deler data med:
