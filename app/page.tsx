@@ -1,5 +1,6 @@
 'use client';
 
+import { Header } from '@/components/layout/header';
 import { RouteSearch } from '@/components/search/route-search';
 import { RouteMap } from '@/components/map/route-map';
 import { TimelineView } from '@/components/timeline/timeline-view';
@@ -23,18 +24,7 @@ export default function Home() {
 
   return (
     <div className="h-screen flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b shadow-sm px-4 py-3">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl font-bold text-primary flex items-center gap-2">
-            <CloudRain className="w-6 h-6" />
-            Kjørefore
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Værvarsel langs hele kjøreruten
-          </p>
-        </div>
-      </header>
+      <Header />
 
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">

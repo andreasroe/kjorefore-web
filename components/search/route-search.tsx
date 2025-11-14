@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { MapPin, Navigation, Calendar, Loader2, ArrowLeftRight } from 'lucide-react';
+import { MapPin, Navigation, Calendar, Loader2, ArrowLeftRight, ChevronDown } from 'lucide-react';
 import { Location, PlacePrediction } from '@/lib/types';
 import { googleMapsService } from '@/lib/services/google-maps';
 
@@ -29,6 +29,7 @@ export function RouteSearch({ onSearch, isLoading }: RouteSearchProps) {
   const [showDestinationDropdown, setShowDestinationDropdown] = useState(false);
 
   const [gettingLocation, setGettingLocation] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Debounce timer
   const [searchTimer, setSearchTimer] = useState<NodeJS.Timeout | null>(null);
@@ -131,6 +132,7 @@ export function RouteSearch({ onSearch, isLoading }: RouteSearchProps) {
     e.preventDefault();
     if (origin && destination) {
       onSearch(origin, destination, departureTime);
+      setIsCollapsed(true); // Collapse after search
     }
   };
 
@@ -154,36 +156,133 @@ export function RouteSearch({ onSearch, isLoading }: RouteSearchProps) {
   };
 
   return (
-    <Card className="p-4 space-y-4">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Origin */}
-        <div className="space-y-2 relative">
-          <Label htmlFor="origin" className="flex items-center gap-2">
-            <MapPin className="w-4 h-4" />
-            Fra
-          </Label>
-          <div className="flex gap-2">
-            <div className="flex-1 relative">
+    <Card className="p-3">
+      {isCollapsed ? (
+        // Collapsed view
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="text-sm truncate">
+              <span className="font-medium">{originInput}</span>
+              <span className="mx-2 text-muted-foreground">→</span>
+              <span className="font-medium">{destinationInput}</span>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {departureTime.toLocaleString('nb-NO', {
+                day: '2-digit',
+                month: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsCollapsed(false)}
+            title="Vis søkedetaljer"
+          >
+            <ChevronDown className="w-4 h-4" />
+          </Button>
+        </div>
+      ) : (
+        // Expanded view
+        <form onSubmit={handleSubmit} className="space-y-3">
+          {/* Origin */}
+          <div className="relative">
+            <div className="flex gap-1.5 items-center">
+              <Label htmlFor="origin" className="text-sm flex items-center gap-1.5 whitespace-nowrap">
+                <MapPin className="w-3.5 h-3.5" />
+                Fra
+              </Label>
+              <div className="flex-1 relative">
+                <Input
+                  id="origin"
+                  value={originInput}
+                  onChange={(e) => handleOriginChange(e.target.value)}
+                  placeholder="Startsted..."
+                  className="h-9 text-sm"
+                  onFocus={() => originPredictions.length > 0 && setShowOriginDropdown(true)}
+                />
+
+                {/* Origin dropdown */}
+                {showOriginDropdown && originPredictions.length > 0 && (
+                  <Card className="absolute top-full left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 shadow-lg">
+                    {originPredictions.map((prediction) => (
+                      <button
+                        key={prediction.place_id}
+                        type="button"
+                        onClick={() => selectPlace(prediction, true)}
+                        className="w-full text-left px-3 py-2 hover:bg-accent transition-colors"
+                      >
+                        <div className="font-medium text-sm">{prediction.structured_formatting.main_text}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {prediction.structured_formatting.secondary_text}
+                        </div>
+                      </button>
+                    ))}
+                  </Card>
+                )}
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-9 w-9"
+                onClick={handleUseCurrentLocation}
+                disabled={gettingLocation || isLoading}
+                title="Bruk min posisjon"
+              >
+                {gettingLocation ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Navigation className="w-3.5 h-3.5" />
+                )}
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-9 w-9"
+                onClick={handleSwap}
+                disabled={isLoading}
+                title="Bytt start og mål"
+              >
+                <ArrowLeftRight className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Destination */}
+          <div className="relative">
+            <div className="flex gap-1.5 items-center">
+              <Label htmlFor="destination" className="text-sm flex items-center gap-1.5 whitespace-nowrap">
+                <MapPin className="w-3.5 h-3.5" />
+                Til
+              </Label>
               <Input
-                id="origin"
-                value={originInput}
-                onChange={(e) => handleOriginChange(e.target.value)}
-                placeholder="Søk etter startsted..."
-                onFocus={() => originPredictions.length > 0 && setShowOriginDropdown(true)}
+                id="destination"
+                value={destinationInput}
+                onChange={(e) => handleDestinationChange(e.target.value)}
+                placeholder="Destinasjon..."
+                className="h-9 text-sm flex-1"
+                onFocus={() => destinationPredictions.length > 0 && setShowDestinationDropdown(true)}
               />
 
-              {/* Origin dropdown */}
-              {showOriginDropdown && originPredictions.length > 0 && (
+              {/* Destination dropdown */}
+              {showDestinationDropdown && destinationPredictions.length > 0 && (
                 <Card className="absolute top-full left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 shadow-lg">
-                  {originPredictions.map((prediction) => (
+                  {destinationPredictions.map((prediction) => (
                     <button
                       key={prediction.place_id}
                       type="button"
-                      onClick={() => selectPlace(prediction, true)}
-                      className="w-full text-left px-4 py-2 hover:bg-accent transition-colors"
+                      onClick={() => selectPlace(prediction, false)}
+                      className="w-full text-left px-3 py-2 hover:bg-accent transition-colors"
                     >
-                      <div className="font-medium">{prediction.structured_formatting.main_text}</div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="font-medium text-sm">{prediction.structured_formatting.main_text}</div>
+                      <div className="text-xs text-muted-foreground">
                         {prediction.structured_formatting.secondary_text}
                       </div>
                     </button>
@@ -191,104 +290,40 @@ export function RouteSearch({ onSearch, isLoading }: RouteSearchProps) {
                 </Card>
               )}
             </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={handleUseCurrentLocation}
-              disabled={gettingLocation || isLoading}
-              title="Bruk min posisjon"
-            >
-              {gettingLocation ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Navigation className="w-4 h-4" />
-              )}
-            </Button>
           </div>
-        </div>
 
-        {/* Swap button */}
-        <div className="flex justify-center">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={handleSwap}
-            disabled={isLoading}
-            title="Bytt start og mål"
-          >
-            <ArrowLeftRight className="w-4 h-4" />
-          </Button>
-        </div>
-
-        {/* Destination */}
-        <div className="space-y-2 relative">
-          <Label htmlFor="destination" className="flex items-center gap-2">
-            <MapPin className="w-4 h-4" />
-            Til
-          </Label>
-          <div className="relative">
+          {/* Departure time */}
+          <div className="flex gap-1.5 items-center">
+            <Label htmlFor="departure" className="text-sm flex items-center gap-1.5 whitespace-nowrap">
+              <Calendar className="w-3.5 h-3.5" />
+              Avreise
+            </Label>
             <Input
-              id="destination"
-              value={destinationInput}
-              onChange={(e) => handleDestinationChange(e.target.value)}
-              placeholder="Søk etter destinasjon..."
-              onFocus={() => destinationPredictions.length > 0 && setShowDestinationDropdown(true)}
+              id="departure"
+              type="datetime-local"
+              className="h-9 text-sm flex-1"
+              value={formatDatetimeLocal(departureTime)}
+              onChange={(e) => setDepartureTime(new Date(e.target.value))}
             />
-
-            {/* Destination dropdown */}
-            {showDestinationDropdown && destinationPredictions.length > 0 && (
-              <Card className="absolute top-full left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 shadow-lg">
-                {destinationPredictions.map((prediction) => (
-                  <button
-                    key={prediction.place_id}
-                    type="button"
-                    onClick={() => selectPlace(prediction, false)}
-                    className="w-full text-left px-4 py-2 hover:bg-accent transition-colors"
-                  >
-                    <div className="font-medium">{prediction.structured_formatting.main_text}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {prediction.structured_formatting.secondary_text}
-                    </div>
-                  </button>
-                ))}
-              </Card>
-            )}
           </div>
-        </div>
 
-        {/* Departure time */}
-        <div className="space-y-2">
-          <Label htmlFor="departure" className="flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
-            Avreise
-          </Label>
-          <Input
-            id="departure"
-            type="datetime-local"
-            value={formatDatetimeLocal(departureTime)}
-            onChange={(e) => setDepartureTime(new Date(e.target.value))}
-          />
-        </div>
-
-        {/* Submit button */}
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={!origin || !destination || isLoading}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Beregner rute...
-            </>
-          ) : (
-            'Søk rute'
-          )}
-        </Button>
-      </form>
+          {/* Submit button */}
+          <Button
+            type="submit"
+            className="w-full h-9"
+            disabled={!origin || !destination || isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
+                Beregner...
+              </>
+            ) : (
+              'Søk rute'
+            )}
+          </Button>
+        </form>
+      )}
     </Card>
   );
 }
