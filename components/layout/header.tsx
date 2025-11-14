@@ -27,8 +27,8 @@ export function Header() {
           </Link>
 
           <div className="flex items-center gap-4">
-            <p className="text-sm text-muted-foreground hidden sm:block">
-              Værvarsel langs hele kjøreruten
+            <p className="text-sm text-muted-foreground hidden sm:block text-left">
+              Værvarsel for din kjøretur
             </p>
             <Button
               variant="ghost"
