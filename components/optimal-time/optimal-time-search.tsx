@@ -24,10 +24,7 @@ interface OptimalTimeSearchPropsExtended extends OptimalTimeSearchProps {
 }
 
 export function OptimalTimeSearch({
-  onSelectCandidate,
-  candidates,
   isAnalyzing,
-  progress,
   onAnalyze
 }: OptimalTimeSearchPropsExtended) {
   const [origin, setOrigin] = useState<Location | null>(null);
