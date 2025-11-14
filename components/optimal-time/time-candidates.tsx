@@ -27,6 +27,11 @@ export function TimeCandidates({ candidates, onSelect }: TimeCandidatesProps) {
     return null;
   }
 
+  // Calculate if conditions are generally poor
+  const scores = candidates.map(c => c.score);
+  const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+  const poorConditions = avgScore < 50;
+
   const getScoreColor = (score: number): string => {
     if (score >= 80) return 'text-green-600';
     if (score >= 60) return 'text-yellow-600';
@@ -39,10 +44,18 @@ export function TimeCandidates({ candidates, onSelect }: TimeCandidatesProps) {
     return 'destructive';
   };
 
+  // Highlight color for best candidate
+  const getBestCandidateStyle = () => {
+    if (poorConditions) {
+      return 'border-orange-500 border-2 bg-orange-50';
+    }
+    return 'border-green-500 border-2 bg-green-50';
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Beste tidspunkt</h3>
+        <h3 className="text-lg font-semibold">Alle tidspunkter</h3>
         <p className="text-sm text-muted-foreground">{candidates.length} alternativer</p>
       </div>
 
@@ -51,7 +64,7 @@ export function TimeCandidates({ candidates, onSelect }: TimeCandidatesProps) {
           key={candidate.departureTime.toISOString()}
           className={`p-4 ${
             index === 0
-              ? 'border-green-500 border-2 bg-green-50'
+              ? getBestCandidateStyle()
               : 'hover:bg-accent transition-colors'
           }`}
         >
@@ -68,9 +81,9 @@ export function TimeCandidates({ candidates, onSelect }: TimeCandidatesProps) {
                       {format(candidate.departureTime, 'HH:mm', { locale: nb })}
                     </span>
                     {index === 0 && (
-                      <Badge className="bg-green-600">
+                      <Badge className={poorConditions ? 'bg-orange-600' : 'bg-green-600'}>
                         <CheckCircle2 className="w-3 h-3 mr-1" />
-                        Anbefalt
+                        {poorConditions ? 'Minst dårlig' : 'Anbefalt'}
                       </Badge>
                     )}
                   </div>

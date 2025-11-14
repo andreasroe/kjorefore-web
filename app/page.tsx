@@ -5,6 +5,7 @@ import { Header } from '@/components/layout/header';
 import { RouteSearch } from '@/components/search/route-search';
 import { OptimalTimeSearch } from '@/components/optimal-time/optimal-time-search';
 import { TimeCandidates } from '@/components/optimal-time/time-candidates';
+import { TimeSummary } from '@/components/optimal-time/time-summary';
 import { RouteMap } from '@/components/map/route-map';
 import { TimelineView } from '@/components/timeline/timeline-view';
 import { useRouteWeather } from '@/lib/hooks/use-route-weather';
@@ -157,6 +158,7 @@ export default function Home() {
           {/* Optimal time results */}
           {optimalCandidates.length > 0 && !isAnalyzingOptimal && (
             <div className="flex-1 overflow-y-auto p-4">
+              <TimeSummary candidates={optimalCandidates} />
               <TimeCandidates candidates={optimalCandidates} onSelect={handleSelectCandidate} />
             </div>
           )}
