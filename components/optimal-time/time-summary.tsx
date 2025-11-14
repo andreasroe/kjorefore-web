@@ -28,8 +28,10 @@ export function TimeSummary({ candidates }: TimeSummaryProps) {
   // Get time range for good candidates
   const getTimeRange = () => {
     if (!hasTimeWindow) return null;
-    const startTime = format(goodCandidates[goodCandidates.length - 1].departureTime, 'HH:mm', { locale: nb });
-    const endTime = format(goodCandidates[0].departureTime, 'HH:mm', { locale: nb });
+    // goodCandidates is sorted by score (highest first), so we need to find earliest and latest times
+    const times = goodCandidates.map(c => c.departureTime).sort((a, b) => a.getTime() - b.getTime());
+    const startTime = format(times[0], 'HH:mm', { locale: nb });
+    const endTime = format(times[times.length - 1], 'HH:mm', { locale: nb });
     return `${startTime}-${endTime}`;
   };
 

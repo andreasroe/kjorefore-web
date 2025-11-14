@@ -31,6 +31,9 @@ export function TimeCandidates({ candidates, onSelect }: TimeCandidatesProps) {
   const scores = candidates.map(c => c.score);
   const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
   const poorConditions = avgScore < 50;
+  const minScore = Math.min(...scores);
+  const maxScore = Math.max(...scores);
+  const narrowWindow = maxScore - minScore <= 10; // All times are very similar
 
   const getScoreColor = (score: number): string => {
     if (score >= 80) return 'text-green-600';
@@ -46,6 +49,10 @@ export function TimeCandidates({ candidates, onSelect }: TimeCandidatesProps) {
 
   // Highlight color for best candidate
   const getBestCandidateStyle = () => {
+    if (narrowWindow) {
+      // When all times are similar, don't highlight any specific one
+      return '';
+    }
     if (poorConditions) {
       return 'border-orange-500 border-2 bg-orange-50';
     }
@@ -80,7 +87,7 @@ export function TimeCandidates({ candidates, onSelect }: TimeCandidatesProps) {
                     <span className="text-xl font-bold">
                       {format(candidate.departureTime, 'HH:mm', { locale: nb })}
                     </span>
-                    {index === 0 && (
+                    {index === 0 && !narrowWindow && (
                       <Badge className={poorConditions ? 'bg-orange-600' : 'bg-green-600'}>
                         <CheckCircle2 className="w-3 h-3 mr-1" />
                         {poorConditions ? 'Minst dårlig' : 'Anbefalt'}
@@ -160,9 +167,9 @@ export function TimeCandidates({ candidates, onSelect }: TimeCandidatesProps) {
             <Button
               onClick={() => onSelect(candidate)}
               className="w-full"
-              variant={index === 0 ? 'default' : 'outline'}
+              variant={index === 0 && !narrowWindow ? 'default' : 'outline'}
             >
-              {index === 0 ? 'Velg anbefalt tid' : 'Velg dette tidspunktet'}
+              Vis værvarsel på rute
             </Button>
           </div>
         </Card>

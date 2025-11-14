@@ -258,7 +258,7 @@ export default function Home() {
           )}
 
           {/* Empty state */}
-          {!route && !isLoading && !error && (
+          {!route && !isLoading && !error && optimalCandidates.length === 0 && (
             <div className="flex-1 flex items-center justify-center p-8">
               <div className="text-center text-muted-foreground">
                 <CloudRain className="w-12 h-12 mx-auto mb-3 opacity-50" />

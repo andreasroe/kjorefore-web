@@ -2,18 +2,25 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { CloudRain, Menu } from 'lucide-react';
+import { CloudRain, Menu, LogIn, LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SideMenu } from '@/components/ui/side-menu';
+import { useSession, signOut } from 'next-auth/react';
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { data: session } = useSession();
 
   const menuItems = [
     { href: '/', label: 'Hjem' },
     { href: '/om', label: 'Om Kjørefore' },
     { href: '/terms', label: 'Vilkår' },
   ];
+
+  const handleSignOut = async () => {
+    setIsMenuOpen(false);
+    await signOut({ callbackUrl: '/' });
+  };
 
   return (
     <>
@@ -48,6 +55,19 @@ export function Header() {
             <CloudRain className="w-5 h-5 text-primary" />
             Meny
           </h2>
+
+          {session?.user && (
+            <div className="mb-6 p-4 bg-accent rounded-lg flex items-center gap-3">
+              <User className="w-5 h-5 text-primary" />
+              <div>
+                <p className="font-medium">{session.user.name || session.user.email}</p>
+                {session.user.name && (
+                  <p className="text-sm text-muted-foreground">{session.user.email}</p>
+                )}
+              </div>
+            </div>
+          )}
+
           <ul className="space-y-2">
             {menuItems.map((item) => (
               <li key={item.href}>
@@ -61,6 +81,26 @@ export function Header() {
               </li>
             ))}
           </ul>
+
+          <div className="mt-6 pt-6 border-t">
+            {session ? (
+              <Button
+                onClick={handleSignOut}
+                variant="outline"
+                className="w-full justify-start text-lg py-6"
+              >
+                <LogOut className="w-5 h-5 mr-3" />
+                Logg ut
+              </Button>
+            ) : (
+              <Link href="/login" onClick={() => setIsMenuOpen(false)}>
+                <Button variant="default" className="w-full justify-start text-lg py-6">
+                  <LogIn className="w-5 h-5 mr-3" />
+                  Logg inn
+                </Button>
+              </Link>
+            )}
+          </div>
         </nav>
       </SideMenu>
     </>
