@@ -21,14 +21,27 @@ export function TimeSummary({ candidates }: TimeSummaryProps) {
   const maxScore = Math.max(...scores);
   const bestCandidate = candidates[0]; // Already sorted by score
 
+  // Find time window for good candidates (within 10 points of best)
+  const goodCandidates = candidates.filter(c => c.score >= bestCandidate.score - 10);
+  const hasTimeWindow = goodCandidates.length > 1;
+
+  // Get time range for good candidates
+  const getTimeRange = () => {
+    if (!hasTimeWindow) return null;
+    const startTime = format(goodCandidates[goodCandidates.length - 1].departureTime, 'HH:mm', { locale: nb });
+    const endTime = format(goodCandidates[0].departureTime, 'HH:mm', { locale: nb });
+    return `${startTime}-${endTime}`;
+  };
+
   // Determine the situation
   const allGood = avgScore >= 80; // Average is excellent
   const mostlyGood = avgScore >= 70 && minScore >= 60; // Most times are good
   const mostlyBad = avgScore < 50; // Average is poor
-  const narrowWindow = maxScore - minScore <= 15; // Not much difference
+  const narrowWindow = maxScore - minScore <= 10; // Not much difference (stricter now)
 
   // Scenario 1: All times are good and similar
   if (allGood && narrowWindow) {
+    const timeRange = getTimeRange();
     return (
       <Card className="p-4 bg-green-50 border-green-200 mb-4">
         <div className="flex items-start gap-3">
@@ -36,7 +49,7 @@ export function TimeSummary({ candidates }: TimeSummaryProps) {
           <div className="flex-1">
             <h3 className="font-semibold text-green-900 mb-1">Gode forhold hele dagen</h3>
             <p className="text-sm text-green-800">
-              Det er generelt fine værforhold langs ruten. Det er ikke så nøye når du kjører -
+              Det er generelt fine værforhold langs ruten{timeRange ? ` mellom kl. ${timeRange}` : ''}. Det er ikke så nøye når du kjører -
               alle tidspunktene er relativt like gode.
             </p>
           </div>
@@ -50,6 +63,7 @@ export function TimeSummary({ candidates }: TimeSummaryProps) {
 
   // Scenario 2: Most times are good
   if (mostlyGood) {
+    const timeRange = getTimeRange();
     return (
       <Card className="p-4 bg-blue-50 border-blue-200 mb-4">
         <div className="flex items-start gap-3">
@@ -58,8 +72,16 @@ export function TimeSummary({ candidates }: TimeSummaryProps) {
             <h3 className="font-semibold text-blue-900 mb-1">Generelt gode forhold</h3>
             <p className="text-sm text-blue-800">
               De fleste tidspunktene har fine værforhold.
-              Beste tid er <strong>{format(bestCandidate.departureTime, 'HH:mm', { locale: nb })}</strong> med
-              score {bestCandidate.score}.
+              {hasTimeWindow ? (
+                <>
+                  Anbefaler å kjøre mellom <strong>{timeRange}</strong> (score {bestCandidate.score}).
+                </>
+              ) : (
+                <>
+                  Beste tid er <strong>{format(bestCandidate.departureTime, 'HH:mm', { locale: nb })}</strong> med
+                  score {bestCandidate.score}.
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -71,6 +93,7 @@ export function TimeSummary({ candidates }: TimeSummaryProps) {
   if (mostlyBad) {
     const scoreDifference = bestCandidate.score - candidates[candidates.length - 1].score;
     const significantDifference = scoreDifference >= 20;
+    const timeRange = getTimeRange();
 
     if (significantDifference) {
       return (
@@ -86,7 +109,7 @@ export function TimeSummary({ candidates }: TimeSummaryProps) {
                 <Clock className="w-5 h-5 text-orange-700" />
                 <div className="flex-1">
                   <div className="font-bold text-orange-900 text-lg">
-                    {format(bestCandidate.departureTime, 'HH:mm', { locale: nb })}
+                    {hasTimeWindow ? timeRange : format(bestCandidate.departureTime, 'HH:mm', { locale: nb })}
                   </div>
                   <div className="text-xs text-orange-700">
                     {format(bestCandidate.departureTime, 'EEEE d. MMMM', { locale: nb })}
@@ -108,9 +131,18 @@ export function TimeSummary({ candidates }: TimeSummaryProps) {
             <div className="flex-1">
               <h3 className="font-semibold text-red-900 mb-1">Vanskelige forhold hele dagen</h3>
               <p className="text-sm text-red-800">
-                Det er utfordrende værforhold på alle tidspunkter.
-                Beste alternativ er <strong>{format(bestCandidate.departureTime, 'HH:mm', { locale: nb })}</strong> (score {bestCandidate.score}),
-                men vurder om turen kan utsettes.
+                Det er utfordrende værforhold på alle tidspunkter{timeRange ? ` mellom kl. ${timeRange}` : ''}.
+                {hasTimeWindow ? (
+                  <>
+                    Beste alternativ er mellom <strong>{timeRange}</strong> (score {bestCandidate.score}),
+                    men vurder om turen kan utsettes.
+                  </>
+                ) : (
+                  <>
+                    Beste alternativ er <strong>{format(bestCandidate.departureTime, 'HH:mm', { locale: nb })}</strong> (score {bestCandidate.score}),
+                    men vurder om turen kan utsettes.
+                  </>
+                )}
               </p>
             </div>
           </div>
@@ -119,7 +151,8 @@ export function TimeSummary({ candidates }: TimeSummaryProps) {
     }
   }
 
-  // Scenario 4: Mixed conditions - show best time
+  // Scenario 4: Mixed conditions - show best time or time window
+  const timeRange = getTimeRange();
   return (
     <Card className="p-4 bg-blue-50 border-blue-200 mb-4">
       <div className="flex items-start gap-3">
@@ -128,8 +161,16 @@ export function TimeSummary({ candidates }: TimeSummaryProps) {
           <h3 className="font-semibold text-blue-900 mb-1">Varierende forhold</h3>
           <p className="text-sm text-blue-800">
             Værforholdene varierer en del gjennom dagen.
-            Anbefaler å kjøre <strong>{format(bestCandidate.departureTime, 'HH:mm', { locale: nb })}</strong> for
-            best forhold (score {bestCandidate.score}).
+            {hasTimeWindow ? (
+              <>
+                Anbefaler å kjøre mellom <strong>{timeRange}</strong> for best forhold (score {bestCandidate.score}).
+              </>
+            ) : (
+              <>
+                Anbefaler å kjøre <strong>{format(bestCandidate.departureTime, 'HH:mm', { locale: nb })}</strong> for
+                best forhold (score {bestCandidate.score}).
+              </>
+            )}
           </p>
         </div>
       </div>
