@@ -27,10 +27,11 @@ export class WeatherService {
 
   /**
    * Generate cache key for coordinates and time
+   * Uses hour precision to maximize cache hits for optimal time analysis
    */
   private getCacheKey(lat: number, lng: number, time?: Date): string {
-    const roundedLat = lat.toFixed(2);
-    const roundedLng = lng.toFixed(2);
+    const roundedLat = lat.toFixed(1); // Less precision = more cache hits
+    const roundedLng = lng.toFixed(1);
     const timeKey = time ? Math.floor(time.getTime() / (60 * 60 * 1000)) : 'current';
     return `${roundedLat},${roundedLng},${timeKey}`;
   }

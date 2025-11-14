@@ -1,12 +1,18 @@
 'use client';
 
+import { useState } from 'react';
 import { Header } from '@/components/layout/header';
 import { RouteSearch } from '@/components/search/route-search';
+import { OptimalTimeSearch } from '@/components/optimal-time/optimal-time-search';
+import { TimeCandidates } from '@/components/optimal-time/time-candidates';
 import { RouteMap } from '@/components/map/route-map';
 import { TimelineView } from '@/components/timeline/timeline-view';
 import { useRouteWeather } from '@/lib/hooks/use-route-weather';
+import { optimalTimeService } from '@/lib/services/optimal-time';
 import { Location } from '@/lib/types';
+import { TimeCandidate } from '@/lib/types/optimal-time';
 import { Card } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CloudRain, MapPin, Clock, AlertTriangle } from 'lucide-react';
 import { formatDistance, formatDuration } from '@/lib/utils/route-calculator';
 import { format } from 'date-fns';
@@ -14,9 +20,46 @@ import { nb } from 'date-fns/locale';
 
 export default function Home() {
   const { route, loadingState, error, progress, fetchRouteWithWeather } = useRouteWeather();
+  const [optimalCandidates, setOptimalCandidates] = useState<TimeCandidate[]>([]);
+  const [isAnalyzingOptimal, setIsAnalyzingOptimal] = useState(false);
+  const [optimalProgress, setOptimalProgress] = useState(0);
 
   const handleSearch = (origin: Location, destination: Location, departureTime: Date) => {
     fetchRouteWithWeather({ origin, destination, departureTime });
+  };
+
+  const handleAnalyzeOptimal = async (
+    origin: Location,
+    destination: Location,
+    date: Date,
+    timeWindow: { startHour: number; endHour: number }
+  ) => {
+    setIsAnalyzingOptimal(true);
+    setOptimalProgress(0);
+    setOptimalCandidates([]);
+
+    try {
+      const results = await optimalTimeService.findOptimalDepartureTime(
+        { origin, destination, date, timeWindow },
+        (p) => setOptimalProgress(p)
+      );
+      setOptimalCandidates(results);
+    } catch (error) {
+      console.error('Error analyzing optimal times:', error);
+      alert('Kunne ikke analysere optimalt tidspunkt. Prøv igjen.');
+    } finally {
+      setIsAnalyzingOptimal(false);
+      setOptimalProgress(0);
+    }
+  };
+
+  const handleSelectCandidate = (candidate: TimeCandidate) => {
+    // Use the route from the selected candidate
+    fetchRouteWithWeather({
+      origin: candidate.route.origin,
+      destination: candidate.route.destination,
+      departureTime: candidate.departureTime,
+    });
   };
 
   const hazardousSegments = route?.segments.filter((s) => s.isHazardous) || [];
@@ -30,9 +73,28 @@ export default function Home() {
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
         <aside className="w-96 bg-gray-50 border-r flex flex-col overflow-hidden">
-          {/* Search form */}
+          {/* Search form with tabs */}
           <div className="p-4">
-            <RouteSearch onSearch={handleSearch} isLoading={isLoading} />
+            <Tabs defaultValue="route" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="route">Søk rute</TabsTrigger>
+                <TabsTrigger value="optimal">Finn beste tid</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="route" className="mt-0">
+                <RouteSearch onSearch={handleSearch} isLoading={isLoading} />
+              </TabsContent>
+
+              <TabsContent value="optimal" className="mt-0">
+                <OptimalTimeSearch
+                  onSelectCandidate={handleSelectCandidate}
+                  candidates={optimalCandidates}
+                  isAnalyzing={isAnalyzingOptimal}
+                  progress={optimalProgress}
+                  onAnalyze={handleAnalyzeOptimal}
+                />
+              </TabsContent>
+            </Tabs>
           </div>
 
           {/* Loading progress */}
@@ -57,6 +119,26 @@ export default function Home() {
             </div>
           )}
 
+          {/* Optimal time analysis progress */}
+          {isAnalyzingOptimal && (
+            <div className="px-4">
+              <Card className="p-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Analyserer tidspunkter...</span>
+                    <span className="font-semibold">{optimalProgress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-primary h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${optimalProgress}%` }}
+                    />
+                  </div>
+                </div>
+              </Card>
+            </div>
+          )}
+
           {/* Error message */}
           {error && (
             <div className="px-4">
@@ -72,8 +154,15 @@ export default function Home() {
             </div>
           )}
 
+          {/* Optimal time results */}
+          {optimalCandidates.length > 0 && !isAnalyzingOptimal && (
+            <div className="flex-1 overflow-y-auto p-4">
+              <TimeCandidates candidates={optimalCandidates} onSelect={handleSelectCandidate} />
+            </div>
+          )}
+
           {/* Route info */}
-          {route && !isLoading && (
+          {route && !isLoading && !isAnalyzingOptimal && optimalCandidates.length === 0 && (
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {/* Summary */}
               <Card className="p-4 space-y-3">

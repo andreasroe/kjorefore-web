@@ -43,3 +43,11 @@ export type {
   PlaceDetails,
   PlaceDetailsResponse,
 } from './places';
+
+// Optimal time types
+export type {
+  TimeCandidate,
+  WeatherSummary,
+  OptimalTimeRequest,
+  WeatherScoreWeights,
+} from './optimal-time';
